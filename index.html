@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel de controle de negócios inteligentes</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #2c3e50;
+}
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+}
+
+.card {
+  background: #fff;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.08);
+}
+
+input, select, button {
+  padding: 10px;
+  margin: 5px 0;
+  width: 100%;
+}
+
+button {
+  background: #27ae60;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #219150;
+}
+
+.dashboard p, .dashboard h3 {
+  margin: 6px 0;
+}
+</style>
+</head>
+
+<body>
+
+<h1> Painel de controle de negócios inteligentes</h1>
+
+<div class="container">
+
+  <div class="card">
+    <h2> Registrar Venda</h2>
+    <input id="produto" placeholder="Produto (Ex: Trator)" />
+    <input id="valorVenda" type="number" placeholder="Valor da Venda" />
+    <input id="vendedor" placeholder="Vendedor" />
+    <button onclick="registrarVenda()">Registrar Venda</button>
+  </div>
+
+  <div class="card">
+    <h2>Movimentação de Caixa</h2>
+    <input id="descricao" placeholder="Descrição" />
+    <input id="valorCaixa" type="number" placeholder="Valor" />
+    <select id="tipo">
+      <option value="entrada">Entrada</option>
+      <option value="saida">Saída</option>
+    </select>
+    <button onclick="movimentarCaixa()">Salvar Movimentação</button>
+  </div>
+
+  <div class="card dashboard">
+    <h2>Financeiro</h2>
+    <div id="dashboard"></div>
+  </div>
+
+</div>
+
+<script>
+let vendas = JSON.parse(localStorage.getItem("vendas")) || [];
+let caixa = JSON.parse(localStorage.getItem("caixa")) || [];
+
+function registrarVenda() {
+  const produto = produtoEl().value;
+  const valor = Number(valorVendaEl().value);
+  const vendedor = vendedorEl().value;
+
+  if (!produto || !valor || !vendedor) return alert("Preencha todos os campos.");
+
+  vendas.push({
+    produto,
+    valor,
+    vendedor,
+    comissao: valor * 0.05,
+    data: new Date().toLocaleDateString()
+  });
+
+  salvar();
+}
+
+function movimentarCaixa() {
+  const descricao = descricaoEl().value;
+  const valor = Number(valorCaixaEl().value);
+  const tipo = tipoEl().value;
+
+  if (!descricao || !valor) return alert("Preencha todos os campos.");
+
+  caixa.push({
+    descricao,
+    valor,
+    tipo,
+    data: new Date().toLocaleDateString()
+  });
+
+  salvar();
+}
+
+function salvar() {
+  localStorage.setItem("vendas", JSON.stringify(vendas));
+  localStorage.setItem("caixa", JSON.stringify(caixa));
+  atualizarDashboard();
+}
+
+function atualizarDashboard() {
+  const totalVendas = vendas.reduce((s, v) => s + v.valor, 0);
+  const totalComissao = vendas.reduce((s, v) => s + v.comissao, 0);
+
+  const entradas = caixa.filter(c => c.tipo === "entrada")
+                        .reduce((s, c) => s + c.valor, 0);
+
+  const saidas = caixa.filter(c => c.tipo === "saida")
+                      .reduce((s, c) => s + c.valor, 0);
+
+  const saldo = entradas - saidas;
+
+  dashboardEl().innerHTML = `
+    <p>Total de Vendas: R$ ${totalVendas.toFixed(2)}</p>
+    <p>Total de Comissões: R$ ${totalComissao.toFixed(2)}</p>
+    <p>Entradas: R$ ${entradas.toFixed(2)}</p>
+    <p>Saídas: R$ ${saidas.toFixed(2)}</p>
+    <h3>Saldo Atual: R$ ${saldo.toFixed(2)}</h3>
+  `;
+}
+
+/* Helpers */
+const produtoEl = () => document.getElementById("produto");
+const valorVendaEl = () => document.getElementById("valorVenda");
+const vendedorEl = () => document.getElementById("vendedor");
+const descricaoEl = () => document.getElementById("descricao");
+const valorCaixaEl = () => document.getElementById("valorCaixa");
+const tipoEl = () => document.getElementById("tipo");
+const dashboardEl = () => document.getElementById("dashboard");
+
+atualizarDashboard();
+</script>
+
+</body>
+</html>
